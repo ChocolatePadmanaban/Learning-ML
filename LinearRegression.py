@@ -5,7 +5,7 @@ import pandas as pd
 ##easy and intuitive. It aims to be the fundamental high-level building block
 ##for doing practical, real world data analysis in Python
 
-import quandl, math
+import quandl, math, datetime
 
 ##Get Financial Data Directly into Python
 ##Get millions of financial and economic
@@ -15,6 +15,11 @@ import numpy as np #like pandas but for homogenius data
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing, svm # sklearn is ML FRAMEWORK 
 from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+from matplotlib import style
+import pickle
+
+style.use('ggplot')
 
 df = quandl.get("WIKI/GOOGL")
 ##Data Frames are grenerall initiated with df
@@ -85,6 +90,16 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 clf = LinearRegression(n_jobs=-1)
 clf.fit(X_train, y_train)
+with open('linearregression.pickle','wb')as f:
+    pickle.dump(clf, f)
+
+pickle_in = open('linearregression.pickle','rb')
+clf = pickle.load(pickle_in)
+
+
+
+
+    
 confidence = clf.score(X_test, y_test)
 
 print(confidence)
@@ -93,10 +108,24 @@ forecast_set = clf.predict(X_lately)
 
 print(forecast_set,confidence, forecast_out)
 
+df['Forecast']= np.nan
 
+last_date = df.iloc[-1].name
+last_unix= last_date.timestamp()
+one_day = 86400
+next_unix = last_unix + one_day
 
+for i in forecast_set:
+    next_date = datetime.datetime.fromtimestamp(next_unix)
+    next_unix += one_day
+    df.loc[next_date] = [np.nan for _ in range(len(df.columns)-1)]+[i]
 
-
+df['Adj. Close'].plot()
+df['Forecast'].plot()
+plt.legend(loc=4)
+plt.xlabel('Date')
+plt.ylabel('Price')
+plt.show()
 
 
 
